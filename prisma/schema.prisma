@@ -11,3 +11,64 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User { 
+  id Int @id @default(autoincrement()) 
+  username String  @unique
+  passwordHash String
+  role Role @default(USER)
+  
+  messageId Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+enum Role { 
+  USER 
+  ADMIN 
+}
+
+model Message {
+  id BigInt @id @default(autoincrement())
+  content String
+  
+  user User @relation(fields: [userId], references: [id])
+  userId Int
+  messageDeliveriesId MessageDelivery[]
+
+  createdAt DateTime @default(now())
+}
+
+model MessageProvider {
+  id Int @id @default(autoincrement())
+  name String @unique
+  isActive Boolean @default(true)
+
+  messageDeliveriesId MessageDelivery[]
+
+  createdAt DateTime @default(now())
+}
+
+model MessageDelivery {
+  id BigInt @id @default(autoincrement())
+  destination String
+  status Status @default(PENDING)
+  sentAt DateTime?
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id])
+  messageId BigInt
+  messageProvider MessageProvider @relation(fields: [messageProviderId], references: [id])
+  messageProviderId Int
+  // TODO: provider_response
+  // TODO: error_message
+
+  updatedAt  DateTime @updatedAt
+}
+
+enum Status {
+  SUCCESS
+  PENDING
+  FAILED
+}
