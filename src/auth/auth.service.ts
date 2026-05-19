@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { UserRepository } from './user.repository';
 import { PASSWORD_HASHER } from './constants/auth.constants';
@@ -58,7 +58,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new BadRequestException('Invalid credentials');
+      throw new ConflictException('Username already exists');
     }
 
     const passwordHash = await this.hasher.hash(dto.password);

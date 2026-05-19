@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -12,7 +11,6 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import type { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -28,11 +26,5 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto) {
     await this.authService.register(registerDto);
-  }
-
-  @Get('test')
-  @UseGuards(JwtAuthGuard)
-  test() {
-    return true;
   }
 }
