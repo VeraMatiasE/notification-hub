@@ -3,17 +3,22 @@ import { ProvidersName } from './messages.dto';
 import { ProviderInterface } from './interfaces/provider.interface';
 import { DiscordWebHookService } from './services/discord-webhook.service';
 import { DiscordBotService } from './services/discord-bot.service';
+import { SlackWebHookService } from './services/slack-webhook.service';
 
 @Injectable()
 export class ProviderFactory {
   constructor(
     private readonly discordService: DiscordWebHookService /*DiscordBotService*/,
+    private readonly slackService: SlackWebHookService,
   ) {}
 
   getProvider(providerName: ProvidersName): ProviderInterface {
     switch (providerName) {
       case ProvidersName.DISCORD:
         return this.discordService;
+
+      case ProvidersName.SLACK:
+        return this.slackService;
 
       default:
         throw new BadRequestException('Invalid provider');

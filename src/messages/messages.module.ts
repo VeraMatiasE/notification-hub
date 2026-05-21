@@ -4,6 +4,7 @@ import { MessagesService } from './messages.service';
 import { ProviderFactory } from './provider.factory';
 import { DiscordWebHookService } from './services/discord-webhook.service';
 import { DiscordBotService } from './services/discord-bot.service';
+import { SlackWebHookService } from './services/slack-webhook.service';
 
 @Module({
   imports: [],
@@ -13,6 +14,7 @@ import { DiscordBotService } from './services/discord-bot.service';
     ProviderFactory,
     DiscordWebHookService,
     DiscordBotService,
+    SlackWebHookService,
   ],
 })
 export class MessagesModule {}

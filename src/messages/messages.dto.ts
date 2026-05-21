@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 
 export enum ProvidersName {
   DISCORD = 'discord',
+  SLACK = 'slack',
 }
 
 export class ProvicerDto {
