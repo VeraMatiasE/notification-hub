@@ -62,8 +62,8 @@ model MessageDelivery {
   messageId BigInt
   messageProvider MessageProvider @relation(fields: [messageProviderId], references: [id])
   messageProviderId Int
-  // TODO: provider_response
-  // TODO: error_message
+  providerResponse Json?
+  errorMessage String?
 
   updatedAt  DateTime @updatedAt
 }

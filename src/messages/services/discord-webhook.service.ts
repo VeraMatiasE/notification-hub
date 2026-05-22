@@ -2,6 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ProviderInterface } from '../interfaces/provider.interface';
 import { ConfigService } from '@nestjs/config';
 import { WebhookClient } from 'discord.js';
+import { ProviderSendMessageResponse } from '../types/provider-response.type';
+import { toJson } from '../utils/to-json.util';
 
 @Injectable()
 export class DiscordWebHookService implements ProviderInterface {
@@ -13,7 +15,10 @@ export class DiscordWebHookService implements ProviderInterface {
     };
   }
 
-  async sendMessage(channelName: string, content: string) {
+  async sendMessage(
+    channelName: string,
+    content: string,
+  ): Promise<ProviderSendMessageResponse> {
     const webhookUrl = this.webhooks[channelName];
 
     if (!webhookUrl) {
@@ -26,8 +31,13 @@ export class DiscordWebHookService implements ProviderInterface {
       url: webhookUrl,
     });
 
-    await webhookClient.send({
+    const response = await webhookClient.send({
       content,
     });
+
+    return {
+      sentAt: new Date(response.timestamp),
+      raw: toJson(response),
+    };
   }
 }

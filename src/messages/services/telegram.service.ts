@@ -2,6 +2,8 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ProviderInterface } from '../interfaces/provider.interface';
 import { ConfigService } from '@nestjs/config';
 import { Telegraf } from 'telegraf';
+import { ProviderSendMessageResponse } from '../types/provider-response.type';
+import { toJson } from '../utils/to-json.util';
 
 @Injectable()
 export class TelegramBotService implements ProviderInterface, OnModuleInit {
@@ -20,7 +22,14 @@ export class TelegramBotService implements ProviderInterface, OnModuleInit {
       .catch(console.error);
   }
 
-  async sendMessage(channelId: string, content: string) {
-    await this.bot.telegram.sendMessage(channelId, content);
+  async sendMessage(
+    channelId: string,
+    content: string,
+  ): Promise<ProviderSendMessageResponse> {
+    const response = await this.bot.telegram.sendMessage(channelId, content);
+    return {
+      sentAt: new Date(response.date * 1000),
+      raw: toJson(response),
+    };
   }
 }

@@ -2,6 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ProviderInterface } from '../interfaces/provider.interface';
 import { ConfigService } from '@nestjs/config';
 import { IncomingWebhook } from '@slack/webhook';
+import { ProviderSendMessageResponse } from '../types/provider-response.type';
+import { toJson } from '../utils/to-json.util';
 
 @Injectable()
 export class SlackWebHookService implements ProviderInterface {
@@ -13,7 +15,10 @@ export class SlackWebHookService implements ProviderInterface {
     };
   }
 
-  async sendMessage(channelName: string, content: string) {
+  async sendMessage(
+    channelName: string,
+    content: string,
+  ): Promise<ProviderSendMessageResponse> {
     const webhookUrl = this.webhooks[channelName];
 
     if (!webhookUrl) {
@@ -24,6 +29,12 @@ export class SlackWebHookService implements ProviderInterface {
 
     const webhook = new IncomingWebhook(webhookUrl);
 
-    await webhook.send({ text: content });
+    const response = await webhook.send({
+      text: content,
+    });
+
+    return {
+      raw: toJson(response),
+    };
   }
 }
