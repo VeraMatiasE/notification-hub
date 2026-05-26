@@ -6,12 +6,14 @@ import { PrismaService } from 'src/database/prisma.service';
 import { Status } from 'generated/prisma/browser';
 import { GetMessagesFiltersDto } from './dto/filter.dto';
 import { Prisma } from 'generated/prisma/client';
+import { MessageRateLimitService } from './services/message-rate-limit.service';
 
 @Injectable()
 export class MessagesService {
   constructor(
     private readonly providerFactory: ProviderFactory,
     private readonly prismaService: PrismaService,
+    private readonly messageRateLimitService: MessageRateLimitService,
   ) {}
 
   async getMessagesByUserId(userId: number, filters: GetMessagesFiltersDto) {
@@ -75,6 +77,8 @@ export class MessagesService {
   }
 
   async sendMessagesToProviders(messageDto: MessagesDTO, userId: number) {
+    await this.messageRateLimitService.validateUserDailyLimit(userId);
+
     const content = messageDto.content;
 
     const message = await this.prismaService.message.create({

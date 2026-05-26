@@ -7,6 +7,7 @@ import { DiscordBotService } from './services/discord-bot.service';
 import { SlackWebHookService } from './services/slack-webhook.service';
 import { TelegramBotService } from './services/telegram.service';
 import { PrismaModule } from 'src/database/prisma.module';
+import { MessageRateLimitService } from './services/message-rate-limit.service';
 
 @Module({
   imports: [PrismaModule],
@@ -18,6 +19,7 @@ import { PrismaModule } from 'src/database/prisma.module';
     DiscordBotService,
     SlackWebHookService,
     TelegramBotService,
+    MessageRateLimitService,
   ],
 })
 export class MessagesModule {}

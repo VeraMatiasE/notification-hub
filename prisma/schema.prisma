@@ -18,6 +18,7 @@ model User {
   username String  @unique
   passwordHash String
   role Role @default(USER)
+  dailyLimit Int @default(100)
   
   messageId Message[]
 
