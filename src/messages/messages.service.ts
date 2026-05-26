@@ -4,6 +4,8 @@ import { ProviderFactory } from './provider.factory';
 import { ProviderInterface } from './interfaces/provider.interface';
 import { PrismaService } from 'src/database/prisma.service';
 import { Status } from 'generated/prisma/browser';
+import { GetMessagesFiltersDto } from './dto/filter.dto';
+import { Prisma } from 'generated/prisma/client';
 
 @Injectable()
 export class MessagesService {
@@ -11,6 +13,66 @@ export class MessagesService {
     private readonly providerFactory: ProviderFactory,
     private readonly prismaService: PrismaService,
   ) {}
+
+  async getMessagesByUserId(userId: number, filters: GetMessagesFiltersDto) {
+    const messageWhere: Prisma.MessageWhereInput = {
+      userId,
+    };
+
+    if (filters.from || filters.to) {
+      messageWhere.createdAt = {
+        ...(filters.from && {
+          gte: new Date(filters.from),
+        }),
+        ...(filters.to && {
+          lte: new Date(filters.to),
+        }),
+      };
+    }
+
+    const whereClause: Prisma.MessageDeliveryWhereInput = {
+      message: messageWhere,
+    };
+
+    if (filters.status) {
+      whereClause.status = filters.status;
+    }
+
+    if (filters.provider) {
+      whereClause.messageProvider = {
+        name: filters.provider,
+      };
+    }
+
+    return await this.prismaService.messageDelivery.findMany({
+      where: whereClause,
+      select: {
+        createdAt: true,
+        destination: true,
+        status: true,
+        sentAt: true,
+        providerResponse: true,
+        errorMessage: true,
+        updatedAt: true,
+
+        message: {
+          select: {
+            content: true,
+            createdAt: true,
+          },
+        },
+
+        messageProvider: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
 
   async sendMessagesToProviders(messageDto: MessagesDTO, userId: number) {
     const content = messageDto.content;
