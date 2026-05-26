@@ -7,12 +7,13 @@ import { PASSWORD_HASHER } from './constants/auth.constants';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { UserRepository } from './user.repository';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UserModule } from './user.module';
 
 @Module({
   imports: [
     ConfigModule,
+    UserModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_SECRET'),
@@ -27,7 +28,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   controllers: [AuthController],
   providers: [
     AuthService,
-    UserRepository,
     PrismaService,
     {
       provide: PASSWORD_HASHER,
