@@ -1,5 +1,5 @@
 import { IsEnum, IsISO8601, IsOptional, IsString } from 'class-validator';
-import { Status } from 'generated/prisma/enums';
+import { Status } from 'src/generated/prisma/enums';
 
 export class GetMessagesFiltersDto {
   @IsOptional()

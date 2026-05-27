@@ -3,9 +3,9 @@ import { MessagesDTO, ProvidersName } from './messages.dto';
 import { ProviderFactory } from './provider.factory';
 import { ProviderInterface } from './interfaces/provider.interface';
 import { PrismaService } from 'src/database/prisma.service';
-import { Status } from 'generated/prisma/browser';
+import { Status } from 'src/generated/prisma/browser';
 import { GetMessagesFiltersDto } from './dto/filter.dto';
-import { Prisma } from 'generated/prisma/client';
+import { Prisma } from 'src/generated/prisma/client';
 import { MessageRateLimitService } from './services/message-rate-limit.service';
 
 @Injectable()
