@@ -1,106 +1,34 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { MessagesDTO, ProvidersName } from './messages.dto';
-import { ProviderFactory } from './provider.factory';
-import { ProviderInterface } from './interfaces/provider.interface';
-import { PrismaService } from 'src/database/prisma.service';
-import { Status } from 'src/generated/prisma/browser';
+import { MessagesDTO } from './messages.dto';
 import { GetMessagesFiltersDto } from './dto/filter.dto';
-import { Prisma } from 'src/generated/prisma/client';
+import { Status } from 'src/generated/prisma/client';
 import { MessageRateLimitService } from './services/message-rate-limit.service';
+import { MessagesRepository } from './messages.repository';
+import { MessageDeliveryService } from './message-delivery.service';
 
 @Injectable()
 export class MessagesService {
   constructor(
-    private readonly providerFactory: ProviderFactory,
-    private readonly prismaService: PrismaService,
+    private readonly messagesRepository: MessagesRepository,
     private readonly messageRateLimitService: MessageRateLimitService,
+    private readonly messageDeliveryService: MessageDeliveryService,
   ) {}
 
   async getMessagesByUserId(userId: number, filters: GetMessagesFiltersDto) {
-    const messageWhere: Prisma.MessageWhereInput = {
-      userId,
-    };
-
-    if (filters.from || filters.to) {
-      messageWhere.createdAt = {
-        ...(filters.from && {
-          gte: new Date(filters.from),
-        }),
-        ...(filters.to && {
-          lte: new Date(filters.to),
-        }),
-      };
-    }
-
-    const whereClause: Prisma.MessageDeliveryWhereInput = {
-      message: messageWhere,
-    };
-
-    if (filters.status) {
-      whereClause.status = filters.status;
-    }
-
-    if (filters.provider) {
-      whereClause.messageProvider = {
-        name: filters.provider,
-      };
-    }
-
-    return await this.prismaService.messageDelivery.findMany({
-      where: whereClause,
-      select: {
-        createdAt: true,
-        destination: true,
-        status: true,
-        sentAt: true,
-        providerResponse: true,
-        errorMessage: true,
-        updatedAt: true,
-
-        message: {
-          select: {
-            content: true,
-            createdAt: true,
-          },
-        },
-
-        messageProvider: {
-          select: {
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    return await this.messagesRepository.getMessagesByUserId(userId, filters);
   }
 
   async sendMessagesToProviders(messageDto: MessagesDTO, userId: number) {
     await this.messageRateLimitService.validateUserDailyLimit(userId);
 
-    const content = messageDto.content;
+    const message = await this.messagesRepository.createMessage(
+      messageDto.content,
+      userId,
+    );
 
-    const message = await this.prismaService.message.create({
-      data: {
-        content,
-        userId,
-      },
-    });
+    const providers = await this.messagesRepository.getActiveProviders();
 
-    const providers = await this.prismaService.messageProvider.findMany({
-      where: {
-        isActive: true,
-      },
-      select: {
-        createdAt: false,
-        isActive: false,
-        id: true,
-        name: true,
-      },
-    });
-
-    const providersMap: ReadonlyMap<string, number> = new Map<string, number>(
+    const providersMap = new Map<string, number>(
       providers.map((provider) => [provider.name, provider.id]),
     );
 
@@ -119,76 +47,15 @@ export class MessagesService {
       };
     });
 
-    await this.prismaService.messageDelivery.createMany({
-      data: deliveriesData,
-    });
+    await this.messagesRepository.createDeliveries(deliveriesData);
 
-    const createdDeliveries = await this.prismaService.messageDelivery.findMany(
-      {
-        where: {
-          messageId: message.id,
-        },
-        include: {
-          messageProvider: true,
-        },
-      },
+    const createdDeliveries =
+      await this.messagesRepository.getDeliveriesByMessageId(message.id);
+
+    const results = await this.messageDeliveryService.processDeliveries(
+      createdDeliveries,
+      messageDto.content,
     );
-
-    const tasks = createdDeliveries.map(async (delivery) => {
-      try {
-        const provider: ProviderInterface = this.providerFactory.getProvider(
-          delivery.messageProvider.name as ProvidersName,
-        );
-        const providerResponse = await provider.sendMessage(
-          delivery.destination,
-          content,
-        );
-
-        await this.prismaService.messageDelivery.update({
-          where: {
-            id: delivery.id,
-          },
-          data: {
-            status: Status.SUCCESS,
-            sentAt: new Date(),
-            providerResponse,
-          },
-        });
-
-        return {
-          deliveryId: delivery.id.toString(),
-          provider: delivery.messageProvider.name,
-          destination: delivery.destination,
-          status: Status.SUCCESS,
-        };
-      } catch (error: unknown) {
-        let errorMessage = 'Unknown error';
-
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        }
-
-        await this.prismaService.messageDelivery.update({
-          where: {
-            id: delivery.id,
-          },
-          data: {
-            status: Status.FAILED,
-            errorMessage,
-          },
-        });
-
-        return {
-          deliveryId: delivery.id.toString(),
-          provider: delivery.messageProvider.name,
-          destination: delivery.destination,
-          status: Status.FAILED,
-          errorMessage,
-        };
-      }
-    });
-
-    const results = await Promise.all(tasks);
 
     return {
       messageId: message.id.toString(),

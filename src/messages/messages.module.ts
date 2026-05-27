@@ -8,12 +8,16 @@ import { SlackWebHookService } from './services/slack-webhook.service';
 import { TelegramBotService } from './services/telegram.service';
 import { PrismaModule } from 'src/database/prisma.module';
 import { MessageRateLimitService } from './services/message-rate-limit.service';
+import { MessageDeliveryService } from './message-delivery.service';
+import { MessagesRepository } from './messages.repository';
 
 @Module({
   imports: [PrismaModule],
   controllers: [MessagesController],
   providers: [
     MessagesService,
+    MessagesRepository,
+    MessageDeliveryService,
     ProviderFactory,
     DiscordWebHookService,
     DiscordBotService,
