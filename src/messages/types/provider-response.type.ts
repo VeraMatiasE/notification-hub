@@ -1,4 +1,4 @@
-import { Prisma } from 'generated/prisma/browser';
+import { Prisma } from 'src/generated/prisma/client';
 
 export type ProviderSendMessageResponse = {
   sentAt?: Date;
