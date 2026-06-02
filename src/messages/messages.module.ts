@@ -3,7 +3,6 @@ import { MessagesController } from './messages.controller';
 import { MessagesService } from './services/messages.service';
 import { ProviderFactory } from './providers/provider.factory';
 import { DiscordWebHookService } from './providers/discord-webhook.service';
-import { DiscordBotService } from './providers/discord-bot.service';
 import { SlackWebHookService } from './providers/slack-webhook.service';
 import { TelegramBotService } from './providers/telegram.service';
 import { PrismaModule } from 'src/database/prisma.module';
@@ -20,7 +19,6 @@ import { MessagesRepository } from './repositories/messages.repository';
     MessageDeliveryService,
     ProviderFactory,
     DiscordWebHookService,
-    DiscordBotService,
     SlackWebHookService,
     TelegramBotService,
     MessageRateLimitService,
