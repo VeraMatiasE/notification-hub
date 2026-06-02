@@ -1,18 +1,19 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { AuthService } from './services/auth.service';
 import { PrismaService } from 'src/database/prisma.service';
 import { HashService } from './services/password-hasher.service';
 import { PASSWORD_HASHER } from './constants/auth.constants';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { UserRepository } from './user.repository';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UserModule } from '../users/users.module';
 
 @Module({
   imports: [
     ConfigModule,
+    UserModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_SECRET'),
@@ -27,7 +28,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   controllers: [AuthController],
   providers: [
     AuthService,
-    UserRepository,
     PrismaService,
     {
       provide: PASSWORD_HASHER,

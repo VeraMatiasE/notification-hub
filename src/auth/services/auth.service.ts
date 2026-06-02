@@ -1,11 +1,11 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
-import { RegisterDto } from './dto/register.dto';
-import { UserRepository } from './user.repository';
-import { PASSWORD_HASHER } from './constants/auth.constants';
-import type { PasswordHasher } from './interfaces/hasher.interface';
+import { RegisterDto } from '../dto/register.dto';
+import { UserRepository } from 'src/users/users.repository';
+import { PASSWORD_HASHER } from '../constants/auth.constants';
+import type { PasswordHasher } from '../interfaces/hasher.interface';
 import { JwtService } from '@nestjs/jwt';
-import { AuthenticatedUser } from './interfaces/authenticated-request.interface';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { AuthenticatedUser } from 'src/common/interfaces/authenticated-request.interface';
+import { JwtPayload } from '../interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {

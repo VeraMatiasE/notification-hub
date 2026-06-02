@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
-import { UserRepository } from '../user.repository';
+import { UserRepository } from '../../users/users.repository';
 import { AuthenticatedRequest } from '../interfaces/authenticated-request.interface';
 
 @Injectable()
