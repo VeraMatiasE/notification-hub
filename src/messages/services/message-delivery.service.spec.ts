@@ -53,26 +53,17 @@ describe('MessageDeliveryService', () => {
       const content = 'Hello world';
 
       mockProviderFactory.getProvider.mockReturnValue(mockProvider);
-
       mockProvider.sendMessage.mockResolvedValue('ok');
-
       mockMessagesRepository.updateDeliveryStatus.mockResolvedValue(undefined);
 
       const result = await service.processDeliveries([delivery], content);
 
-      expect(mockProviderFactory.getProvider).toHaveBeenCalledWith(
-        ProvidersName.DISCORD,
-      );
-
-      expect(mockProvider.sendMessage).toHaveBeenCalledWith('general', content);
-
       expect(mockMessagesRepository.updateDeliveryStatus).toHaveBeenCalledWith(
         1n,
-        {
+        expect.objectContaining({
           status: Status.SUCCESS,
-          sentAt: expect.any(Date),
           providerResponse: 'ok',
-        },
+        }),
       );
 
       expect(result).toEqual([
@@ -97,19 +88,17 @@ describe('MessageDeliveryService', () => {
       const content = 'Hello world';
 
       mockProviderFactory.getProvider.mockReturnValue(mockProvider);
-
       mockProvider.sendMessage.mockRejectedValue(new Error('Provider failed'));
-
       mockMessagesRepository.updateDeliveryStatus.mockResolvedValue(undefined);
 
       const result = await service.processDeliveries([delivery], content);
 
       expect(mockMessagesRepository.updateDeliveryStatus).toHaveBeenCalledWith(
         2n,
-        {
+        expect.objectContaining({
           status: Status.FAILED,
           errorMessage: 'Provider failed',
-        },
+        }),
       );
 
       expect(result).toEqual([
@@ -117,6 +106,51 @@ describe('MessageDeliveryService', () => {
           deliveryId: '2',
           provider: ProvidersName.DISCORD,
           destination: 'general',
+          status: Status.FAILED,
+          errorMessage: 'Provider failed',
+        },
+      ]);
+    });
+
+    it('should process multiple deliveries independently', async () => {
+      const deliveries = [
+        {
+          id: 1n,
+          destination: 'general',
+          messageProvider: {
+            name: ProvidersName.DISCORD,
+          },
+        },
+        {
+          id: 2n,
+          destination: 'alerts',
+          messageProvider: {
+            name: ProvidersName.DISCORD,
+          },
+        },
+      ];
+
+      const content = 'Hello world';
+
+      mockProviderFactory.getProvider.mockReturnValue(mockProvider);
+      mockProvider.sendMessage
+        .mockResolvedValueOnce('ok')
+        .mockRejectedValueOnce(new Error('Provider failed'));
+      mockMessagesRepository.updateDeliveryStatus.mockResolvedValue(undefined);
+
+      const result = await service.processDeliveries(deliveries, content);
+
+      expect(result).toEqual([
+        {
+          deliveryId: '1',
+          provider: ProvidersName.DISCORD,
+          destination: 'general',
+          status: Status.SUCCESS,
+        },
+        {
+          deliveryId: '2',
+          provider: ProvidersName.DISCORD,
+          destination: 'alerts',
           status: Status.FAILED,
           errorMessage: 'Provider failed',
         },

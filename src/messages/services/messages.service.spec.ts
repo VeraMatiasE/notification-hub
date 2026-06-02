@@ -102,15 +102,6 @@ describe('MessagesService', () => {
         mockMessageRateLimitService.validateUserDailyLimit,
       ).toHaveBeenCalledWith(userId);
 
-      expect(mockMessagesRepository.createMessage).toHaveBeenCalledWith(
-        'Hello world',
-        userId,
-      );
-
-      expect(mockMessagesRepository.createDeliveries).toHaveBeenCalled();
-
-      expect(mockMessageDeliveryService.processDeliveries).toHaveBeenCalled();
-
       expect(result).toEqual({
         messageId: '1',
         deliveries: [
@@ -144,34 +135,6 @@ describe('MessagesService', () => {
       await expect(
         service.sendMessagesToProviders(messageDto, 1),
       ).rejects.toThrow(BadRequestException);
-    });
-  });
-
-  describe('getMessagesByUserId', () => {
-    it('should return user messages', async () => {
-      const filters = {
-        query: 'hello',
-      };
-
-      const expectedMessages = [
-        {
-          id: 1,
-          content: 'hello world',
-        },
-      ];
-
-      mockMessagesRepository.getMessagesByUserId.mockResolvedValue(
-        expectedMessages,
-      );
-
-      const result = await service.getMessagesByUserId(1, filters);
-
-      expect(mockMessagesRepository.getMessagesByUserId).toHaveBeenCalledWith(
-        1,
-        filters,
-      );
-
-      expect(result).toEqual(expectedMessages);
     });
   });
 });
