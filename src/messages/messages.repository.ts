@@ -1,7 +1,9 @@
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from 'src/generated/prisma/client';
 import { GetMessagesFiltersDto } from './dto/filter.dto';
 
+@Injectable()
 export class MessagesRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -92,7 +94,7 @@ export class MessagesRepository {
   }
 
   async updateDeliveryStatus(
-    deliveryId: number,
+    deliveryId: bigint,
     data: Prisma.MessageDeliveryUpdateInput,
   ) {
     return this.prismaService.messageDelivery.update({
