@@ -1,17 +1,17 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ProviderInterface } from '../interfaces/provider.interface';
+import { ProviderInterface } from './provider.interface';
 import { ConfigService } from '@nestjs/config';
-import { IncomingWebhook } from '@slack/webhook';
+import { WebhookClient } from 'discord.js';
 import { ProviderSendMessageResponse } from '../types/provider-response.type';
-import { toJson } from '../utils/to-json.util';
+import { toJson } from 'src/common/utils/to-json.util';
 
 @Injectable()
-export class SlackWebHookService implements ProviderInterface {
+export class DiscordWebHookService implements ProviderInterface {
   private webhooks: Record<string, string | undefined>;
 
   constructor(private readonly configService: ConfigService) {
     this.webhooks = {
-      testing: this.configService.get('SLACK_WEBHOOK'),
+      testing: this.configService.get('DISCORD_WEBHOOK'),
     };
   }
 
@@ -23,17 +23,20 @@ export class SlackWebHookService implements ProviderInterface {
 
     if (!webhookUrl) {
       throw new BadRequestException(
-        `Slack destination "${channelName}" not found`,
+        `Discord destination "${channelName}" not found`,
       );
     }
 
-    const webhook = new IncomingWebhook(webhookUrl);
+    const webhookClient = new WebhookClient({
+      url: webhookUrl,
+    });
 
-    const response = await webhook.send({
-      text: content,
+    const response = await webhookClient.send({
+      content,
     });
 
     return {
+      sentAt: new Date(response.timestamp),
       raw: toJson(response),
     };
   }

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { Prisma } from 'src/generated/prisma/client';
-import { GetMessagesFiltersDto } from './dto/filter.dto';
+import { GetMessagesFiltersDto } from '../dto/get-messages-filters.dto';
 
 @Injectable()
 export class MessagesRepository {

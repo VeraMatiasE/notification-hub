@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MessageDeliveryService } from './message-delivery.service';
-import { ProviderFactory } from './provider.factory';
-import { MessagesRepository } from './messages.repository';
+import { ProviderFactory } from '../providers/provider.factory';
+import { MessagesRepository } from '../repositories/messages.repository';
 import { Status } from 'src/generated/prisma/client';
-import { ProvidersName } from './messages.dto';
+import { ProvidersName } from '../dto/send-message.dto';
 
 describe('MessageDeliveryService', () => {
   let service: MessageDeliveryService;

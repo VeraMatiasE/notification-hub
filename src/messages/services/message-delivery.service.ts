@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Status } from 'src/generated/prisma/client';
-import { MessagesRepository } from './messages.repository';
-import { ProviderFactory } from './provider.factory';
-import { ProvidersName } from './messages.dto';
-import { ProviderInterface } from './interfaces/provider.interface';
+import { MessagesRepository } from '../repositories/messages.repository';
+import { ProviderFactory } from '../providers/provider.factory';
+import { ProvidersName } from '../dto/send-message.dto';
+import { ProviderInterface } from '../providers/provider.interface';
 
 interface DeliveryWithProvider {
   id: bigint;

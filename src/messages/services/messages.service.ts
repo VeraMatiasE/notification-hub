@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { MessagesDTO } from './messages.dto';
-import { GetMessagesFiltersDto } from './dto/filter.dto';
+import { SendMessageDto } from '../dto/send-message.dto';
+import { GetMessagesFiltersDto } from '../dto/get-messages-filters.dto';
 import { Status } from 'src/generated/prisma/client';
-import { MessageRateLimitService } from './services/message-rate-limit.service';
-import { MessagesRepository } from './messages.repository';
+import { MessageRateLimitService } from '../services/message-rate-limit.service';
+import { MessagesRepository } from '../repositories/messages.repository';
 import { MessageDeliveryService } from './message-delivery.service';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class MessagesService {
     return await this.messagesRepository.getMessagesByUserId(userId, filters);
   }
 
-  async sendMessagesToProviders(messageDto: MessagesDTO, userId: number) {
+  async sendMessagesToProviders(messageDto: SendMessageDto, userId: number) {
     await this.messageRateLimitService.validateUserDailyLimit(userId);
 
     const message = await this.messagesRepository.createMessage(

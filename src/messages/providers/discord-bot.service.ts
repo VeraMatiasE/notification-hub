@@ -1,9 +1,9 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ProviderInterface } from '../interfaces/provider.interface';
+import { ProviderInterface } from './provider.interface';
 import { ConfigService } from '@nestjs/config';
 import { Client, GatewayIntentBits } from 'discord.js';
 import { ProviderSendMessageResponse } from '../types/provider-response.type';
-import { toJson } from '../utils/to-json.util';
+import { toJson } from 'src/common/utils/to-json.util';
 
 @Injectable()
 export class DiscordBotService implements ProviderInterface, OnModuleInit {

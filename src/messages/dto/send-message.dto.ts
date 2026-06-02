@@ -17,7 +17,7 @@ export class ProvicerDto {
   destination!: string;
 }
 
-export class MessagesDTO {
+export class SendMessageDto {
   @IsNotEmpty()
   @IsString()
   content!: string;

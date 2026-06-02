@@ -7,10 +7,10 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { AuthService } from './services/auth.service';
 import { RegisterDto } from './dto/register.dto';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import type { AuthenticatedRequest } from './interfaces/authenticated-request.interface';
+import { LocalAuthGuard } from 'src/common/guards/local-auth.guard';
+import type { AuthenticatedRequest } from '../common/interfaces/authenticated-request.interface';
 
 @Controller('auth')
 export class AuthController {

@@ -1,12 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
-
 import { MessagesService } from './messages.service';
-import { MessagesRepository } from './messages.repository';
-import { MessageRateLimitService } from './services/message-rate-limit.service';
+import { MessagesRepository } from '../repositories/messages.repository';
+import { MessageRateLimitService } from '../services/message-rate-limit.service';
 import { MessageDeliveryService } from './message-delivery.service';
-
-import { ProvidersName } from './messages.dto';
+import { ProvidersName } from '../dto/send-message.dto';
 import { Status } from 'src/generated/prisma/client';
 
 describe('MessagesService', () => {

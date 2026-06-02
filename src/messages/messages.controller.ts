@@ -1,9 +1,9 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { MessagesDTO } from './messages.dto';
-import { MessagesService } from './messages.service';
-import { CurrentUser } from './decorator/current-user.decorator';
-import { GetMessagesFiltersDto } from './dto/filter.dto';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { SendMessageDto } from './dto/send-message.dto';
+import { MessagesService } from './services/messages.service';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import { GetMessagesFiltersDto } from './dto/get-messages-filters.dto';
 
 @Controller('messages')
 export class MessagesController {
@@ -21,7 +21,7 @@ export class MessagesController {
   @UseGuards(JwtAuthGuard)
   @Post()
   async sendMessages(
-    @Body() messageDto: MessagesDTO,
+    @Body() messageDto: SendMessageDto,
     @CurrentUser('id') userId: number,
   ) {
     return await this.messageService.sendMessagesToProviders(
