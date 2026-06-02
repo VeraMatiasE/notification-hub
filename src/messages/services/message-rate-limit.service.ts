@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { getStartOfCurrentUtcDay } from 'src/common/utils/utc-date.util';
 import { PrismaService } from 'src/database/prisma.service';
 
 @Injectable()
@@ -6,9 +7,7 @@ export class MessageRateLimitService {
   constructor(private readonly prisma: PrismaService) {}
 
   async validateUserDailyLimit(userId: number): Promise<void> {
-    const startOfDay = new Date();
-
-    startOfDay.setHours(0, 0, 0, 0);
+    const startOfDay = getStartOfCurrentUtcDay();
 
     const user = await this.prisma.user.findUnique({
       where: {
