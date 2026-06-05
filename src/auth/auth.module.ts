@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './services/auth.service';
-import { PrismaService } from 'src/database/prisma.service';
 import { HashService } from './services/password-hasher.service';
 import { PASSWORD_HASHER } from './constants/auth.constants';
 import { LocalStrategy } from './strategies/local.strategy';
@@ -9,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from '../users/users.module';
+import { PrismaModule } from 'src/database/prisma.module';
 
 @Module({
   imports: [
@@ -24,11 +24,11 @@ import { UserModule } from '../users/users.module';
       }),
       inject: [ConfigService],
     }),
+    PrismaModule,
   ],
   controllers: [AuthController],
   providers: [
     AuthService,
-    PrismaService,
     {
       provide: PASSWORD_HASHER,
       useClass: HashService,
