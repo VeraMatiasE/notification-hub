@@ -4,6 +4,7 @@ import { MessagesRepository } from '../repositories/messages.repository';
 import { ProviderFactory } from '../providers/provider.factory';
 import { ProvidersName } from '../dto/send-message.dto';
 import { ProviderInterface } from '../providers/provider.interface';
+import { withTimeout } from 'src/common/utils/with-timeout.util';
 
 interface DeliveryWithProvider {
   id: bigint;
@@ -22,15 +23,18 @@ export class MessageDeliveryService {
   ) {}
 
   async processDeliveries(deliveries: DeliveryWithProvider[], content: string) {
+    const PROVIDER_TIMEOUT_MS = 5000;
+
     const tasks = deliveries.map(async (delivery) => {
       try {
         const provider: ProviderInterface = this.providerFactory.getProvider(
           delivery.messageProvider.name as ProvidersName,
         );
 
-        const providerResponse = await provider.sendMessage(
-          delivery.destination,
-          content,
+        const providerResponse = await withTimeout(
+          provider.sendMessage(delivery.destination, content),
+          PROVIDER_TIMEOUT_MS,
+          delivery.messageProvider.name,
         );
 
         await this.messagesRepository.updateDeliveryStatus(delivery.id, {

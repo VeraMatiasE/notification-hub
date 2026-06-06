@@ -88,8 +88,9 @@ export class MessagesRepository {
   }
 
   async createDeliveries(data: Prisma.MessageDeliveryCreateManyInput[]) {
-    return this.prismaService.messageDelivery.createMany({
+    return this.prismaService.messageDelivery.createManyAndReturn({
       data,
+      include: { messageProvider: true },
     });
   }
 
@@ -102,17 +103,6 @@ export class MessagesRepository {
         id: deliveryId,
       },
       data,
-    });
-  }
-
-  async getDeliveriesByMessageId(messageId: bigint) {
-    return this.prismaService.messageDelivery.findMany({
-      where: {
-        messageId,
-      },
-      include: {
-        messageProvider: true,
-      },
     });
   }
 }

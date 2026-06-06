@@ -16,7 +16,7 @@ export enum ProvidersName {
   TELEGRAM = 'telegram',
 }
 
-export class ProvicerDto {
+export class ProviderDto {
   @IsNotEmpty()
   @IsEnum(ProvidersName)
   @ApiProperty({
@@ -41,9 +41,9 @@ export class SendMessageDto {
   @IsArray()
   @IsNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => ProvicerDto)
+  @Type(() => ProviderDto)
   @ArrayMinSize(1)
   @ArrayMaxSize(10)
-  @ApiProperty({ type: [ProvicerDto] })
-  providers!: ProvicerDto[];
+  @ApiProperty({ type: [ProviderDto] })
+  providers!: ProviderDto[];
 }

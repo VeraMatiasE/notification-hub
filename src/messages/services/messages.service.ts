@@ -47,10 +47,8 @@ export class MessagesService {
       };
     });
 
-    await this.messagesRepository.createDeliveries(deliveriesData);
-
     const createdDeliveries =
-      await this.messagesRepository.getDeliveriesByMessageId(message.id);
+      await this.messagesRepository.createDeliveries(deliveriesData);
 
     const results = await this.messageDeliveryService.processDeliveries(
       createdDeliveries,
