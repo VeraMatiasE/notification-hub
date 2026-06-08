@@ -48,6 +48,13 @@ describe('MessageDeliveryService', () => {
         destination: 'general',
         messageProvider: {
           name: ProvidersName.DISCORD,
+          channels: [
+            {
+              name: 'testing',
+              destination: 'testing',
+              isActive: true,
+            },
+          ],
         },
       };
 
@@ -83,6 +90,13 @@ describe('MessageDeliveryService', () => {
         destination: 'general',
         messageProvider: {
           name: ProvidersName.DISCORD,
+          channels: [
+            {
+              name: 'testing',
+              destination: 'testing',
+              isActive: true,
+            },
+          ],
         },
       };
 
@@ -120,6 +134,13 @@ describe('MessageDeliveryService', () => {
           destination: 'general',
           messageProvider: {
             name: ProvidersName.DISCORD,
+            channels: [
+              {
+                name: 'testing',
+                destination: 'testing',
+                isActive: true,
+              },
+            ],
           },
         },
         {
@@ -127,6 +148,13 @@ describe('MessageDeliveryService', () => {
           destination: 'alerts',
           messageProvider: {
             name: ProvidersName.DISCORD,
+            channels: [
+              {
+                name: 'testing',
+                destination: 'testing',
+                isActive: true,
+              },
+            ],
           },
         },
       ];
