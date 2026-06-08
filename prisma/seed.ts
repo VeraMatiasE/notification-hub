@@ -1,8 +1,10 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
-import { PrismaClient, Role } from '../src/generated/prisma/client';
+import { PrismaClient } from '../src/generated/prisma/client';
 import { HashService } from '../src/auth/services/password-hasher.service';
+import { PERMISSIONS } from '../src/common/constants/permissions.constants';
+import { ROLES } from 'src/common/constants/roles.constants';
 
 const databaseUrl = process.env.DATABASE_URL;
 const adminPassword = process.env.ADMIN_PASSWORD;
@@ -18,6 +20,143 @@ const pool = new Pool({
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+const PERMISSION_DESCRIPTIONS = {
+  [PERMISSIONS.MESSAGES_SEND]: 'Send messages',
+  [PERMISSIONS.MESSAGES_LIST]: 'List sent messages',
+  [PERMISSIONS.METRICS_VIEW]: 'View metrics',
+} as const;
+
+const ROLE_PERMISSIONS = {
+  [ROLES.USER]: [PERMISSIONS.MESSAGES_SEND, PERMISSIONS.MESSAGES_LIST],
+  [ROLES.ADMIN]: [
+    PERMISSIONS.MESSAGES_SEND,
+    PERMISSIONS.MESSAGES_LIST,
+    PERMISSIONS.METRICS_VIEW,
+  ],
+} as const;
+
+const PROVIDERS = [
+  {
+    name: 'discord',
+    isActive: true,
+  },
+  {
+    name: 'telegram',
+    isActive: true,
+  },
+  {
+    name: 'slack',
+    isActive: true,
+  },
+  {
+    name: 'team',
+    isActive: false,
+  },
+];
+
+async function seedPermissions() {
+  const permissions = await Promise.all(
+    Object.entries(PERMISSION_DESCRIPTIONS).map(([name, description]) =>
+      prisma.permission.upsert({
+        where: { name },
+        update: {},
+        create: {
+          name,
+          description,
+        },
+      }),
+    ),
+  );
+
+  return new Map(
+    permissions.map((permission) => [permission.name, permission]),
+  );
+}
+
+async function seedRoles() {
+  const adminRole = await prisma.role.upsert({
+    where: { name: ROLES.ADMIN },
+    update: {},
+    create: {
+      name: ROLES.ADMIN,
+      description: 'System administrator',
+    },
+  });
+
+  const userRole = await prisma.role.upsert({
+    where: { name: ROLES.USER },
+    update: {},
+    create: {
+      name: ROLES.USER,
+      description: 'Regular user',
+    },
+  });
+
+  return {
+    adminRole,
+    userRole,
+  };
+}
+
+async function seedRolePermissions(
+  permissionMap: Map<
+    string,
+    Awaited<ReturnType<typeof prisma.permission.upsert>>
+  >,
+  roles: {
+    adminRole: { id: number };
+    userRole: { id: number };
+  },
+) {
+  const rolePermissions = [
+    ...ROLE_PERMISSIONS[ROLES.USER].map((permissionName) => ({
+      roleId: roles.userRole.id,
+      permissionId: permissionMap.get(permissionName)!.id,
+    })),
+    ...ROLE_PERMISSIONS[ROLES.ADMIN].map((permissionName) => ({
+      roleId: roles.adminRole.id,
+      permissionId: permissionMap.get(permissionName)!.id,
+    })),
+  ];
+
+  await prisma.rolePermission.createMany({
+    data: rolePermissions,
+    skipDuplicates: true,
+  });
+}
+
+async function seedUsers(adminRoleId: number, userRoleId: number) {
+  const hashService = new HashService();
+
+  const [adminPasswordHash, userPasswordHash] = await Promise.all([
+    hashService.hash(adminPassword!),
+    hashService.hash(userPassword!),
+  ]);
+
+  await prisma.user.createMany({
+    data: [
+      {
+        username: 'admin',
+        roleId: adminRoleId,
+        passwordHash: adminPasswordHash,
+      },
+      {
+        username: 'user1',
+        roleId: userRoleId,
+        passwordHash: userPasswordHash,
+      },
+    ],
+    skipDuplicates: true,
+  });
+}
+
+async function seedProviders() {
+  await prisma.messageProvider.createMany({
+    data: PROVIDERS,
+    skipDuplicates: true,
+  });
+}
+
 async function main() {
   console.log('Starting database seed...');
 
@@ -25,53 +164,15 @@ async function main() {
     throw new Error('ADMIN_PASSWORD and USER_PASSWORD are required');
   }
 
-  const hashService = new HashService();
-  const [adminPasswordHash, userPasswordHash] = await Promise.all([
-    hashService.hash(adminPassword),
-    hashService.hash(userPassword),
-  ]);
+  const permissionMap = await seedPermissions();
 
-  const users = [
-    {
-      username: 'admin',
-      role: Role.ADMIN,
-      passwordHash: adminPasswordHash,
-    },
-    {
-      username: 'user1',
-      role: Role.USER,
-      passwordHash: userPasswordHash,
-    },
-  ];
+  const roles = await seedRoles();
 
-  const providers = [
-    {
-      name: 'discord',
-      isActive: true,
-    },
-    {
-      name: 'telegram',
-      isActive: true,
-    },
-    {
-      name: 'slack',
-      isActive: true,
-    },
-    {
-      name: 'team',
-      isActive: false,
-    },
-  ];
+  await seedRolePermissions(permissionMap, roles);
 
-  await prisma.user.createMany({
-    data: users,
-    skipDuplicates: true,
-  });
+  await seedUsers(roles.adminRole.id, roles.userRole.id);
 
-  await prisma.messageProvider.createMany({
-    data: providers,
-    skipDuplicates: true,
-  });
+  await seedProviders();
 
   console.log('Database seeded successfully');
 }

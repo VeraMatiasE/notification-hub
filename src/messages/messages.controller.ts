@@ -17,6 +17,9 @@ import {
 } from '@nestjs/swagger';
 import { SendMessageResponseDto } from './dto/response.dto';
 import { LoginDto } from 'src/auth/dto/login.dto';
+import { PermissionsGuard } from 'src/common/guards/permissions.guard';
+import { PERMISSIONS } from 'src/common/constants/permissions.constants';
+import { RequirePermissions } from 'src/common/decorators/permissions.decorator';
 
 @ApiTags('Messages')
 @ApiBearerAuth('access-token')
@@ -24,9 +27,9 @@ import { LoginDto } from 'src/auth/dto/login.dto';
 export class MessagesController {
   constructor(private readonly messageService: MessagesService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Get()
-  @Get()
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PERMISSIONS.MESSAGES_LIST)
   @ApiOperation({
     summary: 'Get user messages',
     description: 'Returns messages belonging to the authenticated user.',
@@ -47,8 +50,9 @@ export class MessagesController {
     return await this.messageService.getMessagesByUserId(userId, filters);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post()
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(PERMISSIONS.MESSAGES_SEND)
   @ApiOperation({
     summary: 'Send message',
     description:
