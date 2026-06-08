@@ -40,6 +40,8 @@ model Message {
   messageDeliveriesId MessageDelivery[]
 
   createdAt DateTime @default(now())
+  
+  @@index([userId, createdAt])
 }
 
 model MessageProvider {
@@ -67,6 +69,9 @@ model MessageDelivery {
   errorMessage String?
 
   updatedAt  DateTime @updatedAt
+
+  @@index([messageId])
+  @@index([status, messageProviderId])
 }
 
 enum Status {
