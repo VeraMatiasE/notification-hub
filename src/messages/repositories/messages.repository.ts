@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
-import { Prisma } from 'src/generated/prisma/client';
+import { Prisma, Status } from 'src/generated/prisma/client';
 import { GetMessagesFiltersDto } from '../dto/get-messages-filters.dto';
+import { SendMessageDto } from '../dto/send-message.dto';
 
 @Injectable()
 export class MessagesRepository {
@@ -13,6 +14,45 @@ export class MessagesRepository {
         content,
         userId,
       },
+    });
+  }
+
+  async createMessageWithDeliveries(
+    messageDto: SendMessageDto,
+    userId: number,
+    providersMap: Map<string, number>,
+  ) {
+    return this.prismaService.$transaction(async (tx) => {
+      for (const p of messageDto.providers) {
+        if (!providersMap.has(p.name)) {
+          throw new BadRequestException(
+            `Provider "${p.name}" is not active or does not exist`,
+          );
+        }
+      }
+
+      const message = await tx.message.create({
+        data: {
+          content: messageDto.content,
+          userId,
+        },
+      });
+
+      const deliveries = messageDto.providers.map((p) => ({
+        messageId: message.id,
+        messageProviderId: providersMap.get(p.name)!,
+        destination: p.destination,
+        status: Status.PENDING,
+      }));
+
+      await tx.messageDelivery.createMany({ data: deliveries });
+
+      const createdDeliveries = await tx.messageDelivery.findMany({
+        where: { messageId: message.id },
+        include: { messageProvider: true },
+      });
+
+      return { message, deliveries: createdDeliveries };
     });
   }
 

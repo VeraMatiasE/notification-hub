@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsNotEmpty,
   IsString,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -35,6 +36,7 @@ export class ProviderDto {
 export class SendMessageDto {
   @IsNotEmpty()
   @IsString()
+  @MaxLength(4000)
   @ApiProperty()
   content!: string;
 

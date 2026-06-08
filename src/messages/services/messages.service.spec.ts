@@ -12,6 +12,7 @@ describe('MessagesService', () => {
 
   const mockMessagesRepository = {
     createMessage: jest.fn(),
+    createMessageWithDeliveries: jest.fn(),
     getActiveProviders: jest.fn(),
     createDeliveries: jest.fn(),
     getDeliveriesByMessageId: jest.fn(),
@@ -19,7 +20,7 @@ describe('MessagesService', () => {
   };
 
   const mockMessageRateLimitService = {
-    validateUserDailyLimit: jest.fn(),
+    ensureUserCanSendMessage: jest.fn(),
   };
 
   const mockMessageDeliveryService = {
@@ -64,8 +65,11 @@ describe('MessagesService', () => {
         ],
       };
 
-      mockMessagesRepository.createMessage.mockResolvedValue({
-        id: 1,
+      mockMessagesRepository.createMessageWithDeliveries.mockResolvedValue({
+        message: {
+          id: 1,
+        },
+        deliveries: undefined,
       });
 
       mockMessagesRepository.getActiveProviders.mockResolvedValue([
@@ -74,8 +78,6 @@ describe('MessagesService', () => {
           name: ProvidersName.DISCORD,
         },
       ]);
-
-      mockMessagesRepository.createDeliveries.mockResolvedValue(undefined);
 
       mockMessagesRepository.getDeliveriesByMessageId.mockResolvedValue([
         {
@@ -99,7 +101,7 @@ describe('MessagesService', () => {
       const result = await service.sendMessagesToProviders(messageDto, userId);
 
       expect(
-        mockMessageRateLimitService.validateUserDailyLimit,
+        mockMessageRateLimitService.ensureUserCanSendMessage,
       ).toHaveBeenCalledWith(userId);
 
       expect(result).toEqual({
@@ -113,28 +115,6 @@ describe('MessagesService', () => {
           },
         ],
       });
-    });
-
-    it('should throw BadRequestException when provider does not exist', async () => {
-      const messageDto = {
-        content: 'Hello world',
-        providers: [
-          {
-            name: ProvidersName.DISCORD,
-            destination: 'general',
-          },
-        ],
-      };
-
-      mockMessagesRepository.createMessage.mockResolvedValue({
-        id: 1,
-      });
-
-      mockMessagesRepository.getActiveProviders.mockResolvedValue([]);
-
-      await expect(
-        service.sendMessagesToProviders(messageDto, 1),
-      ).rejects.toThrow(BadRequestException);
     });
   });
 });

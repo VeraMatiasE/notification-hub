@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { getStartOfCurrentUtcDay } from 'src/common/utils/utc-date.util';
 import { PrismaService } from 'src/database/prisma.service';
 
@@ -6,34 +11,39 @@ import { PrismaService } from 'src/database/prisma.service';
 export class MessageRateLimitService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async validateUserDailyLimit(userId: number): Promise<void> {
+  async ensureUserCanSendMessage(userId: number): Promise<void> {
     const startOfDay = getStartOfCurrentUtcDay();
 
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      select: {
-        dailyLimit: true,
-      },
-    });
+    const [user, messagesSentToday] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+        select: {
+          dailyLimit: true,
+        },
+      }),
+      this.prisma.message.count({
+        where: {
+          userId,
+          createdAt: {
+            gte: startOfDay,
+          },
+        },
+      }),
+    ]);
 
     if (!user) {
-      return;
+      throw new NotFoundException(`User with id ${userId} not found`);
     }
-
-    const messagesSentToday = await this.prisma.message.count({
-      where: {
-        userId,
-        createdAt: {
-          gte: startOfDay,
-        },
-      },
-    });
 
     if (messagesSentToday >= user.dailyLimit) {
       throw new HttpException(
-        'Daily message limit exceeded',
+        {
+          message: 'Daily message limit exceeded',
+          limit: user.dailyLimit,
+          used: messagesSentToday,
+        },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
