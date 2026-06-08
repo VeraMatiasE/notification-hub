@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
-import { PrismaClient, Role } from 'src/generated/prisma/client';
-import { HashService } from 'src/auth/services/password-hasher.service';
+import { PrismaClient, Role } from '../src/generated/prisma/client';
+import { HashService } from '../src/auth/services/password-hasher.service';
 
 const databaseUrl = process.env.DATABASE_URL;
 const adminPassword = process.env.ADMIN_PASSWORD;
