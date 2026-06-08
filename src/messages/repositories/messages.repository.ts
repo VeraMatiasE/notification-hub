@@ -49,7 +49,16 @@ export class MessagesRepository {
 
       const createdDeliveries = await tx.messageDelivery.findMany({
         where: { messageId: message.id },
-        include: { messageProvider: true },
+        include: {
+          messageProvider: {
+            include: {
+              channels: {
+                where: { isActive: true },
+                select: { name: true, destination: true, isActive: true },
+              },
+            },
+          },
+        },
       });
 
       return { message, deliveries: createdDeliveries };

@@ -10,6 +10,7 @@ describe('MessageDeliveryService', () => {
 
   const mockProvider = {
     sendMessage: jest.fn(),
+    loadChannels: jest.fn(),
   };
 
   const mockProviderFactory = {

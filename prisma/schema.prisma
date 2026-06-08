@@ -77,9 +77,25 @@ model MessageProvider {
   name String @unique
   isActive Boolean @default(true)
 
+  channels          ProviderChannel[]
   messageDeliveriesId MessageDelivery[]
 
   createdAt DateTime @default(now())
+}
+
+model ProviderChannel {
+  id         Int             @id @default(autoincrement())
+  name       String
+  destination String
+  isActive   Boolean         @default(true)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  providerId Int
+  provider   MessageProvider @relation(fields: [providerId], references: [id])
+
+  @@unique([providerId, name])
+  @@index([providerId, isActive])
 }
 
 model MessageDelivery {

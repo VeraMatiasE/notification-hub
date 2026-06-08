@@ -35,24 +35,44 @@ const ROLE_PERMISSIONS = {
   ],
 } as const;
 
-const PROVIDERS = [
-  {
-    name: 'discord',
-    isActive: true,
-  },
-  {
-    name: 'telegram',
-    isActive: true,
-  },
-  {
-    name: 'slack',
-    isActive: true,
-  },
-  {
-    name: 'team',
-    isActive: false,
-  },
-];
+function getProviders() {
+  const discordWebhook = process.env.DISCORD_WEBHOOK;
+  const slackWebhook = process.env.SLACK_WEBHOOK;
+  const telegramChatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!discordWebhook) throw new Error('DISCORD_WEBHOOK is required');
+  if (!slackWebhook) throw new Error('SLACK_WEBHOOK is required');
+  if (!telegramChatId) throw new Error('TELEGRAM_CHAT_ID is required');
+
+  return [
+    {
+      name: 'discord',
+      isActive: true,
+      channels: [
+        { name: 'testing', destination: discordWebhook, isActive: true },
+      ],
+    },
+    {
+      name: 'telegram',
+      isActive: true,
+      channels: [
+        { name: 'testing', destination: telegramChatId, isActive: true },
+      ],
+    },
+    {
+      name: 'slack',
+      isActive: true,
+      channels: [
+        { name: 'testing', destination: slackWebhook, isActive: true },
+      ],
+    },
+    {
+      name: 'team',
+      isActive: false,
+      channels: [],
+    },
+  ];
+}
 
 async function seedPermissions() {
   const permissions = await Promise.all(
@@ -151,10 +171,35 @@ async function seedUsers(adminRoleId: number, userRoleId: number) {
 }
 
 async function seedProviders() {
-  await prisma.messageProvider.createMany({
-    data: PROVIDERS,
-    skipDuplicates: true,
-  });
+  const providers = getProviders();
+
+  for (const { channels, ...providerData } of providers) {
+    const provider = await prisma.messageProvider.upsert({
+      where: { name: providerData.name },
+      update: {},
+      create: providerData,
+    });
+
+    if (channels.length > 0) {
+      await Promise.all(
+        channels.map((channel) =>
+          prisma.providerChannel.upsert({
+            where: {
+              providerId_name: {
+                providerId: provider.id,
+                name: channel.name,
+              },
+            },
+            update: {},
+            create: {
+              ...channel,
+              providerId: provider.id,
+            },
+          }),
+        ),
+      );
+    }
+  }
 }
 
 async function main() {

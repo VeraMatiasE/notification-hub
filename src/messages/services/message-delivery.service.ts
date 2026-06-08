@@ -6,14 +6,18 @@ import { ProvidersName } from '../dto/send-message.dto';
 import { ProviderInterface } from '../providers/provider.interface';
 import { withTimeout } from 'src/common/utils/with-timeout.util';
 
-interface DeliveryWithProvider {
+type DeliveryWithProvider = {
   id: bigint;
   destination: string;
-
   messageProvider: {
     name: string;
+    channels: {
+      name: string;
+      destination: string;
+      isActive: boolean;
+    }[];
   };
-}
+};
 
 @Injectable()
 export class MessageDeliveryService {
@@ -30,6 +34,8 @@ export class MessageDeliveryService {
         const provider: ProviderInterface = this.providerFactory.getProvider(
           delivery.messageProvider.name as ProvidersName,
         );
+
+        provider.loadChannels(delivery.messageProvider.channels);
 
         const providerResponse = await withTimeout(
           provider.sendMessage(delivery.destination, content),
