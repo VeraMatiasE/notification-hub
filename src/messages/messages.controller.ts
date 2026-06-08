@@ -74,10 +74,12 @@ export class MessagesController {
   async sendMessages(
     @Body() messageDto: SendMessageDto,
     @CurrentUser('id') userId: number,
+    @CurrentUser('username') username: string,
   ) {
     return await this.messageService.sendMessagesToProviders(
       messageDto,
       userId,
+      username,
     );
   }
 }

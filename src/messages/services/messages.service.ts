@@ -17,7 +17,13 @@ export class MessagesService {
     return await this.messagesRepository.getMessagesByUserId(userId, filters);
   }
 
-  async sendMessagesToProviders(messageDto: SendMessageDto, userId: number) {
+  async sendMessagesToProviders(
+    messageDto: SendMessageDto,
+    userId: number,
+    username: string,
+  ) {
+    const signedContent = `[${username}] ${messageDto.content}`;
+
     await this.messageRateLimitService.ensureUserCanSendMessage(userId);
 
     const providers = await this.messagesRepository.getActiveProviders();
@@ -33,7 +39,7 @@ export class MessagesService {
 
     const results = await this.messageDeliveryService.processDeliveries(
       deliveries,
-      messageDto.content,
+      signedContent,
     );
 
     return {
