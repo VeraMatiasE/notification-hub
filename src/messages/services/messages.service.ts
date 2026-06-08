@@ -43,7 +43,8 @@ export class MessagesService {
     );
 
     return {
-      messageId: message.id.toString(),
+      content: message.content,
+      createdAt: message.createdAt,
       deliveries: results,
     };
   }

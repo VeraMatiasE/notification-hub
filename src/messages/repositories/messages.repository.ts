@@ -96,17 +96,18 @@ export class MessagesRepository {
       };
     }
 
-    return await this.prismaService.messageDelivery.findMany({
+    const deliveries = await this.prismaService.messageDelivery.findMany({
       where: whereClause,
 
       select: {
-        createdAt: true,
+        createdAt: false,
         destination: true,
         status: true,
         sentAt: true,
-        providerResponse: true,
-        errorMessage: true,
-        updatedAt: true,
+        providerResponse: false,
+        errorMessage: false,
+        updatedAt: false,
+        messageId: false,
 
         message: {
           select: {
@@ -126,6 +127,18 @@ export class MessagesRepository {
         createdAt: 'desc',
       },
     });
+
+    return deliveries.map(
+      ({ message, messageProvider, destination, ...delivery }) => ({
+        provider: messageProvider.name,
+        channel: destination,
+        createdAt: message.createdAt,
+        ...delivery,
+        ...(delivery.status === Status.FAILED && {
+          error: 'Delivery failed. Contact support if the issue persists.',
+        }),
+      }),
+    );
   }
 
   async getActiveProviders() {

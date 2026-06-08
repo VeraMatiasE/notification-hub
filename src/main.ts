@@ -4,10 +4,12 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
@@ -39,5 +41,10 @@ async function bootstrap() {
   }
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
+
+  if (process.env.NODE_ENV !== 'production') {
+    const url = await app.getUrl();
+    logger.warn(`Swagger UI enabled at ${url}/api`);
+  }
 }
 bootstrap();

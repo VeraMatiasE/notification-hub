@@ -20,6 +20,7 @@ import { LoginDto } from 'src/auth/dto/login.dto';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/common/constants/permissions.constants';
 import { RequirePermissions } from 'src/common/decorators/permissions.decorator';
+import { ListMessageResponseDto } from './dto/list-messages-response.dto';
 
 @ApiTags('Messages')
 @ApiBearerAuth('access-token')
@@ -39,6 +40,7 @@ export class MessagesController {
   })
   @ApiOkResponse({
     description: 'Messages retrieved successfully',
+    type: ListMessageResponseDto,
   })
   @ApiUnauthorizedResponse({
     description: 'Invalid or missing JWT',
@@ -46,7 +48,7 @@ export class MessagesController {
   async getMessages(
     @CurrentUser('id') userId: number,
     @Query() filters: GetMessagesFiltersDto,
-  ) {
+  ): Promise<ListMessageResponseDto[]> {
     return await this.messageService.getMessagesByUserId(userId, filters);
   }
 
@@ -79,7 +81,7 @@ export class MessagesController {
     @Body() messageDto: SendMessageDto,
     @CurrentUser('id') userId: number,
     @CurrentUser('username') username: string,
-  ) {
+  ): Promise<SendMessageResponseDto> {
     return await this.messageService.sendMessagesToProviders(
       messageDto,
       userId,

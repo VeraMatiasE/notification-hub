@@ -76,7 +76,6 @@ describe('MessageDeliveryService', () => {
 
       expect(result).toEqual([
         {
-          deliveryId: '1',
           provider: ProvidersName.DISCORD,
           destination: 'general',
           status: Status.SUCCESS,
@@ -118,7 +117,6 @@ describe('MessageDeliveryService', () => {
 
       expect(result).toEqual([
         {
-          deliveryId: '2',
           provider: ProvidersName.DISCORD,
           destination: 'general',
           status: Status.FAILED,
@@ -171,13 +169,11 @@ describe('MessageDeliveryService', () => {
 
       expect(result).toEqual([
         {
-          deliveryId: '1',
           provider: ProvidersName.DISCORD,
           destination: 'general',
           status: Status.SUCCESS,
         },
         {
-          deliveryId: '2',
           provider: ProvidersName.DISCORD,
           destination: 'alerts',
           status: Status.FAILED,

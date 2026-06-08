@@ -50,7 +50,6 @@ export class MessageDeliveryService {
         });
 
         return {
-          deliveryId: delivery.id.toString(),
           provider: delivery.messageProvider.name,
           destination: delivery.destination,
           status: Status.SUCCESS,
@@ -68,7 +67,6 @@ export class MessageDeliveryService {
         });
 
         return {
-          deliveryId: delivery.id.toString(),
           provider: delivery.messageProvider.name,
           destination: delivery.destination,
           status: Status.FAILED,

@@ -54,6 +54,7 @@ describe('MessagesService', () => {
   describe('sendMessagesToProviders', () => {
     it('should send messages successfully', async () => {
       const userId = 1;
+      const mockUsername = 'test';
 
       const messageDto = {
         content: 'Hello world',
@@ -67,6 +68,7 @@ describe('MessagesService', () => {
 
       mockMessagesRepository.createMessageWithDeliveries.mockResolvedValue({
         message: {
+          content: messageDto.content,
           id: 1,
         },
         deliveries: undefined,
@@ -91,24 +93,27 @@ describe('MessagesService', () => {
 
       mockMessageDeliveryService.processDeliveries.mockResolvedValue([
         {
-          deliveryId: '100',
           provider: ProvidersName.DISCORD,
           destination: 'general',
           status: Status.SUCCESS,
         },
       ]);
 
-      const result = await service.sendMessagesToProviders(messageDto, userId);
+      const result = await service.sendMessagesToProviders(
+        messageDto,
+        userId,
+        mockUsername,
+      );
 
       expect(
         mockMessageRateLimitService.ensureUserCanSendMessage,
       ).toHaveBeenCalledWith(userId);
 
       expect(result).toEqual({
-        messageId: '1',
+        content: messageDto.content,
+        createdAt: undefined,
         deliveries: [
           {
-            deliveryId: '100',
             provider: ProvidersName.DISCORD,
             destination: 'general',
             status: Status.SUCCESS,
