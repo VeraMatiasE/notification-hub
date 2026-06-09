@@ -42,9 +42,7 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 
-  if (process.env.NODE_ENV !== 'production') {
-    const url = await app.getUrl();
-    logger.warn(`Swagger UI enabled at ${url}/api`);
-  }
+  const url = await app.getUrl();
+  logger.warn(`Swagger UI enabled at ${url}/api`);
 }
 bootstrap();
