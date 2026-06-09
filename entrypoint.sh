@@ -21,7 +21,7 @@ echo "Running Prisma migrations..."
 pnpm prisma migrate deploy
 if [ "$RUN_SEED" = "true" ]; then
   echo "Filling database basic data..."
-  node dist/prisma/seed.js
+  pnpm tsx prisma/seed.ts
 fi
 
 echo "Starting app..."

@@ -10,6 +10,7 @@ describe('MessageDeliveryService', () => {
 
   const mockProvider = {
     sendMessage: jest.fn(),
+    loadChannels: jest.fn(),
   };
 
   const mockProviderFactory = {
@@ -47,6 +48,13 @@ describe('MessageDeliveryService', () => {
         destination: 'general',
         messageProvider: {
           name: ProvidersName.DISCORD,
+          channels: [
+            {
+              name: 'testing',
+              destination: 'testing',
+              isActive: true,
+            },
+          ],
         },
       };
 
@@ -68,7 +76,6 @@ describe('MessageDeliveryService', () => {
 
       expect(result).toEqual([
         {
-          deliveryId: '1',
           provider: ProvidersName.DISCORD,
           destination: 'general',
           status: Status.SUCCESS,
@@ -82,6 +89,13 @@ describe('MessageDeliveryService', () => {
         destination: 'general',
         messageProvider: {
           name: ProvidersName.DISCORD,
+          channels: [
+            {
+              name: 'testing',
+              destination: 'testing',
+              isActive: true,
+            },
+          ],
         },
       };
 
@@ -103,7 +117,6 @@ describe('MessageDeliveryService', () => {
 
       expect(result).toEqual([
         {
-          deliveryId: '2',
           provider: ProvidersName.DISCORD,
           destination: 'general',
           status: Status.FAILED,
@@ -119,6 +132,13 @@ describe('MessageDeliveryService', () => {
           destination: 'general',
           messageProvider: {
             name: ProvidersName.DISCORD,
+            channels: [
+              {
+                name: 'testing',
+                destination: 'testing',
+                isActive: true,
+              },
+            ],
           },
         },
         {
@@ -126,6 +146,13 @@ describe('MessageDeliveryService', () => {
           destination: 'alerts',
           messageProvider: {
             name: ProvidersName.DISCORD,
+            channels: [
+              {
+                name: 'testing',
+                destination: 'testing',
+                isActive: true,
+              },
+            ],
           },
         },
       ];
@@ -142,13 +169,11 @@ describe('MessageDeliveryService', () => {
 
       expect(result).toEqual([
         {
-          deliveryId: '1',
           provider: ProvidersName.DISCORD,
           destination: 'general',
           status: Status.SUCCESS,
         },
         {
-          deliveryId: '2',
           provider: ProvidersName.DISCORD,
           destination: 'alerts',
           status: Status.FAILED,

@@ -1,25 +1,25 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ProviderInterface } from './provider.interface';
-import { ConfigService } from '@nestjs/config';
 import { IncomingWebhook } from '@slack/webhook';
 import { ProviderSendMessageResponse } from '../types/provider-response.type';
 import { toJson } from 'src/common/utils/to-json.util';
+import { ProviderChannel } from 'src/generated/prisma/client';
 
 @Injectable()
 export class SlackWebHookService implements ProviderInterface {
-  private webhooks: Record<string, string | undefined>;
+  private channels: Map<string, string> = new Map();
 
-  constructor(private readonly configService: ConfigService) {
-    this.webhooks = {
-      testing: this.configService.get('SLACK_WEBHOOK'),
-    };
+  loadChannels(channels: ProviderChannel[]): void {
+    this.channels = new Map(
+      channels.filter((c) => c.isActive).map((c) => [c.name, c.destination]),
+    );
   }
 
   async sendMessage(
     channelName: string,
     content: string,
   ): Promise<ProviderSendMessageResponse> {
-    const webhookUrl = this.webhooks[channelName];
+    const webhookUrl = this.channels.get(channelName);
 
     if (!webhookUrl) {
       throw new BadRequestException(

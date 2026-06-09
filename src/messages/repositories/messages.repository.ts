@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
-import { Prisma } from 'src/generated/prisma/client';
+import { Prisma, Status } from 'src/generated/prisma/client';
 import { GetMessagesFiltersDto } from '../dto/get-messages-filters.dto';
+import { SendMessageDto } from '../dto/send-message.dto';
 
 @Injectable()
 export class MessagesRepository {
@@ -13,6 +14,54 @@ export class MessagesRepository {
         content,
         userId,
       },
+    });
+  }
+
+  async createMessageWithDeliveries(
+    messageDto: SendMessageDto,
+    userId: number,
+    providersMap: Map<string, number>,
+  ) {
+    return this.prismaService.$transaction(async (tx) => {
+      for (const p of messageDto.providers) {
+        if (!providersMap.has(p.name)) {
+          throw new BadRequestException(
+            `Provider "${p.name}" is not active or does not exist`,
+          );
+        }
+      }
+
+      const message = await tx.message.create({
+        data: {
+          content: messageDto.content,
+          userId,
+        },
+      });
+
+      const deliveries = messageDto.providers.map((p) => ({
+        messageId: message.id,
+        messageProviderId: providersMap.get(p.name)!,
+        destination: p.destination,
+        status: Status.PENDING,
+      }));
+
+      await tx.messageDelivery.createMany({ data: deliveries });
+
+      const createdDeliveries = await tx.messageDelivery.findMany({
+        where: { messageId: message.id },
+        include: {
+          messageProvider: {
+            include: {
+              channels: {
+                where: { isActive: true },
+                select: { name: true, destination: true, isActive: true },
+              },
+            },
+          },
+        },
+      });
+
+      return { message, deliveries: createdDeliveries };
     });
   }
 
@@ -47,17 +96,18 @@ export class MessagesRepository {
       };
     }
 
-    return await this.prismaService.messageDelivery.findMany({
+    const deliveries = await this.prismaService.messageDelivery.findMany({
       where: whereClause,
 
       select: {
-        createdAt: true,
+        createdAt: false,
         destination: true,
         status: true,
         sentAt: true,
-        providerResponse: true,
-        errorMessage: true,
-        updatedAt: true,
+        providerResponse: false,
+        errorMessage: false,
+        updatedAt: false,
+        messageId: false,
 
         message: {
           select: {
@@ -77,6 +127,18 @@ export class MessagesRepository {
         createdAt: 'desc',
       },
     });
+
+    return deliveries.map(
+      ({ message, messageProvider, destination, ...delivery }) => ({
+        provider: messageProvider.name,
+        channel: destination,
+        createdAt: message.createdAt,
+        ...delivery,
+        ...(delivery.status === Status.FAILED && {
+          error: 'Delivery failed. Contact support if the issue persists.',
+        }),
+      }),
+    );
   }
 
   async getActiveProviders() {
@@ -88,8 +150,9 @@ export class MessagesRepository {
   }
 
   async createDeliveries(data: Prisma.MessageDeliveryCreateManyInput[]) {
-    return this.prismaService.messageDelivery.createMany({
+    return this.prismaService.messageDelivery.createManyAndReturn({
       data,
+      include: { messageProvider: true },
     });
   }
 
@@ -102,17 +165,6 @@ export class MessagesRepository {
         id: deliveryId,
       },
       data,
-    });
-  }
-
-  async getDeliveriesByMessageId(messageId: bigint) {
-    return this.prismaService.messageDelivery.findMany({
-      where: {
-        messageId,
-      },
-      include: {
-        messageProvider: true,
-      },
     });
   }
 }

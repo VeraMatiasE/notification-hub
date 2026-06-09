@@ -17,7 +17,10 @@ model User {
   id Int @id @default(autoincrement()) 
   username String  @unique
   passwordHash String
-  role Role @default(USER)
+
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id])
+
   dailyLimit Int @default(100)
   
   messageId Message[]
@@ -26,9 +29,34 @@ model User {
   updatedAt  DateTime @updatedAt
 }
 
-enum Role { 
-  USER 
-  ADMIN 
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  description String?
+  createdAt   DateTime         @default(now())
+
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  description String?
+  createdAt   DateTime         @default(now())
+
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+  assignedAt   DateTime @default(now())
+
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
 }
 
 model Message {
@@ -40,6 +68,8 @@ model Message {
   messageDeliveriesId MessageDelivery[]
 
   createdAt DateTime @default(now())
+  
+  @@index([userId, createdAt])
 }
 
 model MessageProvider {
@@ -47,9 +77,25 @@ model MessageProvider {
   name String @unique
   isActive Boolean @default(true)
 
+  channels          ProviderChannel[]
   messageDeliveriesId MessageDelivery[]
 
   createdAt DateTime @default(now())
+}
+
+model ProviderChannel {
+  id         Int             @id @default(autoincrement())
+  name       String
+  destination String
+  isActive   Boolean         @default(true)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  providerId Int
+  provider   MessageProvider @relation(fields: [providerId], references: [id])
+
+  @@unique([providerId, name])
+  @@index([providerId, isActive])
 }
 
 model MessageDelivery {
@@ -67,6 +113,9 @@ model MessageDelivery {
   errorMessage String?
 
   updatedAt  DateTime @updatedAt
+
+  @@index([messageId])
+  @@index([status, messageProviderId])
 }
 
 enum Status {

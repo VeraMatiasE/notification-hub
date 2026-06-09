@@ -1,7 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { GetMessagesFiltersDto } from '../dto/get-messages-filters.dto';
-import { Status } from 'src/generated/prisma/client';
 import { MessageRateLimitService } from '../services/message-rate-limit.service';
 import { MessagesRepository } from '../repositories/messages.repository';
 import { MessageDeliveryService } from './message-delivery.service';
@@ -18,48 +17,41 @@ export class MessagesService {
     return await this.messagesRepository.getMessagesByUserId(userId, filters);
   }
 
-  async sendMessagesToProviders(messageDto: SendMessageDto, userId: number) {
-    await this.messageRateLimitService.validateUserDailyLimit(userId);
+  async sendMessagesToProviders(
+    messageDto: SendMessageDto,
+    userId: number,
+    username: string,
+  ) {
+    const signedContent = `[${username}] ${messageDto.content}`;
 
-    const message = await this.messagesRepository.createMessage(
-      messageDto.content,
-      userId,
-    );
+    await this.messageRateLimitService.ensureUserCanSendMessage(userId);
 
     const providers = await this.messagesRepository.getActiveProviders();
 
-    const providersMap = new Map<string, number>(
-      providers.map((provider) => [provider.name, provider.id]),
-    );
+    const providersMap = this.createProvidersMap(providers);
 
-    const deliveriesData = messageDto.providers.map((provider) => {
-      const providerId = providersMap.get(provider.name);
-
-      if (!providerId) {
-        throw new BadRequestException(`Provider "${provider.name}" not found`);
-      }
-
-      return {
-        destination: provider.destination,
-        messageId: message.id,
-        messageProviderId: providerId,
-        status: Status.PENDING,
-      };
-    });
-
-    await this.messagesRepository.createDeliveries(deliveriesData);
-
-    const createdDeliveries =
-      await this.messagesRepository.getDeliveriesByMessageId(message.id);
+    const { message, deliveries } =
+      await this.messagesRepository.createMessageWithDeliveries(
+        messageDto,
+        userId,
+        providersMap,
+      );
 
     const results = await this.messageDeliveryService.processDeliveries(
-      createdDeliveries,
-      messageDto.content,
+      deliveries,
+      signedContent,
     );
 
     return {
-      messageId: message.id.toString(),
+      content: message.content,
+      createdAt: message.createdAt,
       deliveries: results,
     };
+  }
+
+  private createProvidersMap(
+    providers: { id: number; name: string }[],
+  ): Map<string, number> {
+    return new Map(providers.map((p) => [p.name, p.id]));
   }
 }
