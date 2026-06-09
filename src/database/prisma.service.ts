@@ -19,7 +19,6 @@ export class PrismaService
   async onApplicationBootstrap() {
     try {
       await this.$connect();
-      await this.$queryRaw`SELECT 1`;
 
       this.logger.log('Database connection established');
     } catch (error) {
